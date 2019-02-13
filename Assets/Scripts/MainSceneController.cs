@@ -9,13 +9,15 @@ public class MainSceneController : MonoBehaviour
         public Vector3 translate;
         public Vector3 scale;
         public Vector3 rotation;
+        public int length;
         public int enable;
 
-        public TransformData(Vector3 translate, Vector3 scale, Vector3 rotation, int enable)
+        public TransformData(Vector3 translate, Vector3 scale, Vector3 rotation, int length, int enable)
         {
             this.translate = translate;
             this.scale = scale;
             this.rotation = rotation;
+            this.length = length;
             this.enable = enable;
         }
     };
@@ -101,7 +103,7 @@ public class MainSceneController : MonoBehaviour
             colorBuffer.Release();
         }
 
-        transformDataBuffer = new ComputeBuffer(instanceCount, 40);
+        transformDataBuffer = new ComputeBuffer(instanceCount, 44);
         colorBuffer = new ComputeBuffer(instanceCount, 16);
 
         TransformData[] transformData = new TransformData[instanceCount];
@@ -116,6 +118,7 @@ public class MainSceneController : MonoBehaviour
                 center + new Vector3(offset, 0f, offset * 0.0001f),
                 new Vector3(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), 1f),
                 new Vector3(Random.Range(-Mathf.PI, Mathf.PI), 0f, 0f),
+                Random.Range(1, currentTextLength),
                 offset < currentTextLength ? 1 : 0);
             
             colors[i] = Random.ColorHSV();
@@ -159,17 +162,20 @@ public class MainSceneController : MonoBehaviour
         TransformData[] transformData = new TransformData[instanceCount];
         transformDataBuffer.GetData(transformData);
 
-        int offset = 0;
+        var offset = 0;
+        var length = Random.Range(1, currentTextLength);
 
         for (int i = 0; i < instanceCount; i++)
         {
-            transformData[i].enable = offset < currentTextLength ? 1 : 0;
+            transformData[i].length = length;
+            transformData[i].enable = offset < length ? 1 : 0;
 
             ++offset;
 
             if (i % maxTextLength == 0)
             {
                 offset = 0;
+                length = Random.Range(1, currentTextLength);
             }
         }
 

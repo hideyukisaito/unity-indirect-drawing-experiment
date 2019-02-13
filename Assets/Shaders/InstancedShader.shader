@@ -31,6 +31,7 @@
 				float3 translate;
 				float3 scale;
 				float3 rotation;
+				int length;
 				int enable;
 			};
 
