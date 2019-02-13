@@ -276,7 +276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ebe58fcbd64ca541837a369c8f3584c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  instanceCount: 20000
+  instanceCount: 200
   maxTextLength: 20
   currentTextLength: 20
   msdfTexture: {fileID: 2800000, guid: bddfed8ac1d69614f9d7d58808a222b5, type: 3}

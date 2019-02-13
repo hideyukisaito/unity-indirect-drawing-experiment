@@ -45,7 +45,7 @@ public class MainSceneController : MonoBehaviour
 
     private List<string> quotes = new List<string>()
     {
-        "船に乗りたい"
+        "船に乗りたーいyo～！"
     };
 
     [SerializeField, Range(1, 100000)] public int instanceCount = 100;
@@ -202,8 +202,9 @@ public class MainSceneController : MonoBehaviour
                 var uvOffset = min;
 
                 transformData[index] = new TransformData(
-                    center + new Vector3(j * 20f, 0f, j * 0.0001f),
-                    new Vector3(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), 1f),
+                    center + new Vector3(j * 5f, 0f, j * 0.0001f),
+                    //new Vector3(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), 1f),
+                    new Vector3(uvScale.x * 32f, uvScale.y * 32f, 1f),
                     new Vector3(Random.Range(-Mathf.PI, Mathf.PI), 0f, 0f),
                     //new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)),
                     uvOffset,
