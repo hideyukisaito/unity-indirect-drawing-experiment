@@ -1,6 +1,11 @@
-﻿using System.Collections;
+﻿using MSDFText;
+using Newtonsoft.Json;
+using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class MainSceneController : MonoBehaviour
 {
@@ -9,28 +14,55 @@ public class MainSceneController : MonoBehaviour
         public Vector3 translate;
         public Vector3 scale;
         public Vector3 rotation;
-        public int length;
+        public Vector2 uvOffset;
+        public Vector2 uvScale;
         public int enable;
 
-        public TransformData(Vector3 translate, Vector3 scale, Vector3 rotation, int length, int enable)
+        public TransformData(Vector3 translate, Vector3 scale, Vector3 rotation, Vector2 uvOffset, Vector2 uvScale, int enable)
         {
             this.translate = translate;
             this.scale = scale;
             this.rotation = rotation;
-            this.length = length;
+            this.uvOffset = uvOffset;
+            this.uvScale = uvScale;
             this.enable = enable;
         }
     };
 
-    [SerializeField, Range(1, 100000)] public int instanceCount = 1000;
+    struct TextSettings
+    {
+        public string text;
+        public MeshInfo meshInfo;
+
+        public TextSettings(string text, MeshInfo meshInfo)
+        {
+            this.text = text;
+            this.meshInfo = meshInfo;
+        }
+    };
+
+    private static readonly int MAX_TEXT_LENGTH = 20;
+
+    private List<string> quotes = new List<string>()
+    {
+        "船に乗りたい"
+    };
+
+    [SerializeField, Range(1, 100000)] public int instanceCount = 100;
     [SerializeField, Range(1, 20)] public int maxTextLength = 20;
     [SerializeField, Range(1, 20)] public int currentTextLength = 20;
+    [SerializeField] private Texture2D msdfTexture;
 
     public Mesh instanceMesh;
     public Material instanceMaterial;
     public int subMeshIndex = 0;
     public Texture2D texture;
 
+    private string fontDataPath = "MSDFFonts/NotoSansCJKjp-Regular-japanese-full.json";
+    private MSDFFontData fontData;
+    private TextSettings[] textSettings;
+
+    private int numTextGroups;
     private int cachedInstanceCount = -1;
     private int cachedSubMeshIndex = -1;
     private int cachedCurrentTextLength = 20;
@@ -41,11 +73,35 @@ public class MainSceneController : MonoBehaviour
 
     void Start()
     {
+        var path = Path.Combine(Application.dataPath, fontDataPath);
+
+        if (File.Exists(path))
+        {
+            var source = File.ReadAllText(path);
+
+            fontData = JsonConvert.DeserializeObject<MSDFFontData>(source);
+
+            MeshInfo info = MSDFTextMesh.GetMeshInfo("hello", fontData, true);
+            Debug.Log(info.uvs.Length);
+        }
+
+        //numTextGroups = GetTextGroupCount();
+
+        textSettings = new TextSettings[1];
+
+        var text = "";
+
+        for (var i = 0; i < textSettings.Length; ++i)
+        {
+            text = quotes[Random.Range(0, quotes.Count)];
+            textSettings[i] = new TextSettings(text, MSDFTextMesh.GetMeshInfo(text, fontData, true));
+        }
+
         instanceMesh = CreateMesh();
 
         instanceMaterial = new Material(Shader.Find("Unlit/InstanceShader"));
         instanceMaterial.SetColor("_Color", Random.ColorHSV());
-        instanceMaterial.SetTexture("_MainTex", texture);
+        instanceMaterial.SetTexture("_MainTex", msdfTexture);
 
         argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
         UpdateBuffers();
@@ -103,34 +159,65 @@ public class MainSceneController : MonoBehaviour
             colorBuffer.Release();
         }
 
-        transformDataBuffer = new ComputeBuffer(instanceCount, 44);
+        numTextGroups = GetTextGroupCount();
+
+        var oldLength = textSettings.Length;
+        Array.Resize(ref textSettings, numTextGroups);
+
+        var text = "";
+        
+        if (oldLength < textSettings.Length)
+        {
+            for (var i = oldLength; i < textSettings.Length; ++i)
+            {
+                text = quotes[Random.Range(0, quotes.Count)];
+                textSettings[i] = new TextSettings(text, MSDFTextMesh.GetMeshInfo(text, fontData, true));
+
+                for (var j = 0; j < textSettings[i].meshInfo.uvs.Length; ++j)
+                {
+                    Debug.Log($"text \"{text}\" uvs {i}-{j} : x = {textSettings[i].meshInfo.uvs[j].x * 4096f}, y = {textSettings[i].meshInfo.uvs[j].y * 4096f}");
+                }
+            }
+        }
+
+        transformDataBuffer = new ComputeBuffer(instanceCount, 56);
         colorBuffer = new ComputeBuffer(instanceCount, 16);
 
         TransformData[] transformData = new TransformData[instanceCount];
         Color[] colors = new Color[instanceCount];
 
         Vector3 center = new Vector3(Random.Range(-100f, 100f), Random.Range(-100f, 100f), Random.Range(-100f, 100f));
-        int offset = 0;
 
-        for (int i = 0; i < instanceCount; i++)
+        for (var i = 0; i < numTextGroups; ++i)
         {
-            transformData[i] = new TransformData(
-                center + new Vector3(offset, 0f, offset * 0.0001f),
-                new Vector3(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), 1f),
-                new Vector3(Random.Range(-Mathf.PI, Mathf.PI), 0f, 0f),
-                Random.Range(1, currentTextLength),
-                offset < currentTextLength ? 1 : 0);
-            
-            colors[i] = Random.ColorHSV();
+            var uvIndex = 0;
 
-            ++offset;
-
-            if (i % maxTextLength == 0)
+            for (int j = 0; j < MAX_TEXT_LENGTH; ++j)
             {
-                offset = 0;
-                center.Set(Random.Range(-100f, 100f), Random.Range(-100f, 100f), Random.Range(-100f, 100f));
+                var index = (i * MAX_TEXT_LENGTH) + j;
+
+                var max = textSettings[i].meshInfo.uvs[uvIndex + 3];
+                var min = textSettings[i].meshInfo.uvs[uvIndex + 1];
+                var uvScale = max - min;
+                var uvOffset = min;
+
+                transformData[index] = new TransformData(
+                    center + new Vector3(j * 20f, 0f, j * 0.0001f),
+                    new Vector3(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), 1f),
+                    new Vector3(Random.Range(-Mathf.PI, Mathf.PI), 0f, 0f),
+                    //new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)),
+                    uvOffset,
+                    uvScale,
+                    j < textSettings[i].text.Length ? 1 : 0);
+
+                colors[index] = Random.ColorHSV();
+
+                uvIndex = Mathf.Min(uvIndex + 4, textSettings[i].meshInfo.uvs.Length - 4);
             }
+
+            center.Set(Random.Range(-100f, 100f), Random.Range(-100f, 100f), Random.Range(-100f, 100f));
         }
+        
 
         transformDataBuffer.SetData(transformData);
         colorBuffer.SetData(colors);
@@ -159,6 +246,7 @@ public class MainSceneController : MonoBehaviour
 
     void UpdateTextLength()
     {
+        return;
         TransformData[] transformData = new TransformData[instanceCount];
         transformDataBuffer.GetData(transformData);
 
@@ -167,7 +255,6 @@ public class MainSceneController : MonoBehaviour
 
         for (int i = 0; i < instanceCount; i++)
         {
-            transformData[i].length = length;
             transformData[i].enable = offset < length ? 1 : 0;
 
             ++offset;
@@ -182,6 +269,11 @@ public class MainSceneController : MonoBehaviour
         transformDataBuffer.SetData(transformData);
 
         cachedCurrentTextLength = currentTextLength;
+    }
+
+    int GetTextGroupCount()
+    {
+        return instanceCount / MAX_TEXT_LENGTH;
     }
 
     void OnDisable()
@@ -207,28 +299,29 @@ public class MainSceneController : MonoBehaviour
 
         mesh.name = "TestMesh";
 
-        var length = 1f;
+        var length = 10f;
 
         var vertices = new List<Vector3>
         {
-            new Vector3 (length, length, 0),
             new Vector3 (-length, length, 0),
-            new Vector3 (length, -length, 0),
             new Vector3 (-length, -length, 0),
+            new Vector3 (length, -length, 0),
+            new Vector3 (length, length, 0),
         };
 
         var triangles = new List<int>
         {
-            1, 0, 2,
-            1, 2, 3
+            0, 3, 1,
+            1, 3, 2
         };
 
         var uvs = new List<Vector2>
         {
-            new Vector2(1, 1),
             new Vector2(0, 1),
-            new Vector2(1, 0),
             new Vector2(0, 0),
+            new Vector2(1, 0),
+            new Vector2(1, 1),
+            
         };
 
         mesh.SetVertices(vertices);
