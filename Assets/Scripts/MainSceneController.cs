@@ -172,11 +172,6 @@ public class MainSceneController : MonoBehaviour
             {
                 text = quotes[Random.Range(0, quotes.Count)];
                 textSettings[i] = new TextSettings(text, MSDFTextMesh.GetMeshInfo(text, fontData, true));
-
-                for (var j = 0; j < textSettings[i].meshInfo.uvs.Length; ++j)
-                {
-                    Debug.Log($"text \"{text}\" uvs {i}-{j} : x = {textSettings[i].meshInfo.uvs[j].x * 4096f}, y = {textSettings[i].meshInfo.uvs[j].y * 4096f}");
-                }
             }
         }
 
@@ -191,10 +186,21 @@ public class MainSceneController : MonoBehaviour
         for (var i = 0; i < numTextGroups; ++i)
         {
             var uvIndex = 0;
+            var vertexIndex = 0;
 
             for (int j = 0; j < MAX_TEXT_LENGTH; ++j)
             {
                 var index = (i * MAX_TEXT_LENGTH) + j;
+
+                var tl = textSettings[i].meshInfo.positions[vertexIndex + 0];
+                var bl = textSettings[i].meshInfo.positions[vertexIndex + 1];
+                var br = textSettings[i].meshInfo.positions[vertexIndex + 2];
+                var tr = textSettings[i].meshInfo.positions[vertexIndex + 3];
+                var x = tl.x + (br.x - tl.x) * 0.5f;
+                var y = tl.y + (br.y - tl.y) * 0.5f;
+                var w = Mathf.Abs(br.x - tl.x);
+                var h = Mathf.Abs(br.y - tl.y);
+                Debug.Log($"{textSettings[i].text[vertexIndex / 4]} : tl = {tl.x}, {tl.y}, bl = {bl.x}, {bl.y}, br = {br.x}, {br.y}, tr = {tr.x}, {tr.y}, x = {x}, y = {y}");
 
                 var max = textSettings[i].meshInfo.uvs[uvIndex + 3];
                 var min = textSettings[i].meshInfo.uvs[uvIndex + 1];
@@ -202,11 +208,9 @@ public class MainSceneController : MonoBehaviour
                 var uvOffset = min;
 
                 transformData[index] = new TransformData(
-                    center + new Vector3(j * 5f, 0f, j * 0.0001f),
-                    //new Vector3(Random.Range(0.2f, 1f), Random.Range(0.2f, 1f), 1f),
-                    new Vector3(uvScale.x * 32f, uvScale.y * 32f, 1f),
+                    center + new Vector3(x, y, j * 0.0001f),
+                    new Vector3(w * 0.5f, h * 0.5f, 1f),
                     new Vector3(Random.Range(-Mathf.PI, Mathf.PI), 0f, 0f),
-                    //new Vector2(Random.Range(0f, 1f), Random.Range(0f, 1f)),
                     uvOffset,
                     uvScale,
                     j < textSettings[i].text.Length ? 1 : 0);
@@ -214,6 +218,7 @@ public class MainSceneController : MonoBehaviour
                 colors[index] = Random.ColorHSV();
 
                 uvIndex = Mathf.Min(uvIndex + 4, textSettings[i].meshInfo.uvs.Length - 4);
+                vertexIndex = Mathf.Min(vertexIndex + 4, textSettings[i].meshInfo.positions.Length - 4);
             }
 
             center.Set(Random.Range(-100f, 100f), Random.Range(-100f, 100f), Random.Range(-100f, 100f));
@@ -300,7 +305,7 @@ public class MainSceneController : MonoBehaviour
 
         mesh.name = "TestMesh";
 
-        var length = 10f;
+        var length = 1f;
 
         var vertices = new List<Vector3>
         {
