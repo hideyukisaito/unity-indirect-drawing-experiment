@@ -75,11 +75,13 @@
 				TransformData transform = transformDataBuffer[instanceID];
 
 				float3 localPosition = v.vertex.xyz * transform.scale;
-
 				float3 worldPosition = transform.translate + localPosition + float3(0.0, sin(_Time.y * 4.0 + (float)instanceID) * 5.0, 0.0);
+				float4 worldCoord = float4(unity_ObjectToWorld._m03, unity_ObjectToWorld._m13, unity_ObjectToWorld._m23, 1);
+				float4 viewPos = mul(UNITY_MATRIX_V, worldCoord) + float4(worldPosition, 0);
+				float4 outPos = mul(UNITY_MATRIX_P, viewPos);
 
 				v2f output;
-				output.pos = mul(UNITY_MATRIX_VP, float4(worldPosition, 1.0f));
+				output.pos = outPos;
 				output.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				output.instanceID = instanceID;
 
