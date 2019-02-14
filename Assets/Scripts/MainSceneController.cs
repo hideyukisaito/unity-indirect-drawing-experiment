@@ -45,13 +45,17 @@ public class MainSceneController : MonoBehaviour
 
     private List<string> quotes = new List<string>()
     {
-        "船に乗りたーいyo～！"
+        "かっこいい！",
+        "かわいいー！",
+        "Cool!!",
+        "Yeah!!",
     };
 
     [SerializeField, Range(1, 100000)] public int instanceCount = 100;
     [SerializeField, Range(1, 20)] public int maxTextLength = 20;
     [SerializeField, Range(1, 20)] public int currentTextLength = 20;
     [SerializeField] private Texture2D msdfTexture;
+    [SerializeField, Range(1, 10000f)] private float sphereScale = 1000f;
 
     public Mesh instanceMesh;
     public Material instanceMaterial;
@@ -132,11 +136,11 @@ public class MainSceneController : MonoBehaviour
 
     void OnGUI()
     {
-        GUI.Label(new Rect(265, 25, 200, 30), "Instance Count: " + instanceCount.ToString());
-        instanceCount = (int)GUI.HorizontalSlider(new Rect(25, 20, 200, 30), (float)instanceCount, 1.0f, 100000.0f);
+        //GUI.Label(new Rect(265, 25, 200, 30), "Instance Count: " + instanceCount.ToString());
+        //instanceCount = (int)GUI.HorizontalSlider(new Rect(25, 20, 200, 30), (float)instanceCount, 1.0f, 100000.0f);
 
-        GUI.Label(new Rect(265, 50, 200, 30), "Max Text Length: " + currentTextLength.ToString());
-        currentTextLength = (int)GUI.HorizontalSlider(new Rect(25, 50, 200, 30), (float)currentTextLength, 1.0f, 20.0f);
+        //GUI.Label(new Rect(265, 50, 200, 30), "Max Text Length: " + currentTextLength.ToString());
+        //currentTextLength = (int)GUI.HorizontalSlider(new Rect(25, 50, 200, 30), (float)currentTextLength, 1.0f, 20.0f);
     }
 
     void UpdateBuffers()
@@ -181,7 +185,7 @@ public class MainSceneController : MonoBehaviour
         TransformData[] transformData = new TransformData[instanceCount];
         Color[] colors = new Color[instanceCount];
 
-        Vector3 center = new Vector3(Random.Range(-100f, 100f), Random.Range(-100f, 100f), Random.Range(-100f, 100f));
+        Vector3 center = Random.insideUnitSphere * sphereScale;
 
         for (var i = 0; i < numTextGroups; ++i)
         {
@@ -200,7 +204,7 @@ public class MainSceneController : MonoBehaviour
                 var y = tl.y + (br.y - tl.y) * 0.5f;
                 var w = Mathf.Abs(br.x - tl.x);
                 var h = Mathf.Abs(br.y - tl.y);
-                Debug.Log($"{textSettings[i].text[vertexIndex / 4]} : tl = {tl.x}, {tl.y}, bl = {bl.x}, {bl.y}, br = {br.x}, {br.y}, tr = {tr.x}, {tr.y}, x = {x}, y = {y}");
+                //Debug.Log($"{textSettings[i].text[vertexIndex / 4]} : tl = {tl.x}, {tl.y}, bl = {bl.x}, {bl.y}, br = {br.x}, {br.y}, tr = {tr.x}, {tr.y}, x = {x}, y = {y}");
 
                 var max = textSettings[i].meshInfo.uvs[uvIndex + 3];
                 var min = textSettings[i].meshInfo.uvs[uvIndex + 1];
@@ -221,7 +225,7 @@ public class MainSceneController : MonoBehaviour
                 vertexIndex = Mathf.Min(vertexIndex + 4, textSettings[i].meshInfo.positions.Length - 4);
             }
 
-            center.Set(Random.Range(-100f, 100f), Random.Range(-100f, 100f), Random.Range(-100f, 100f));
+            center = Random.insideUnitSphere * sphereScale;
         }
         
 
