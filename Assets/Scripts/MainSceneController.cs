@@ -186,20 +186,22 @@ public class MainSceneController : MonoBehaviour
         Color[] colors = new Color[instanceCount];
 
         Vector3 center = Random.insideUnitSphere * sphereScale;
+        Vector3 offset = Vector3.zero;
 
         for (var i = 0; i < numTextGroups; ++i)
         {
             var uvIndex = 0;
             var vertexIndex = 0;
 
+            center = Random.insideUnitSphere * sphereScale;
+            offset.Set(textSettings[i].meshInfo.width * 0.5f, 0f, 0f);
+
             for (int j = 0; j < MAX_TEXT_LENGTH; ++j)
             {
                 var index = (i * MAX_TEXT_LENGTH) + j;
 
                 var tl = textSettings[i].meshInfo.positions[vertexIndex + 0];
-                var bl = textSettings[i].meshInfo.positions[vertexIndex + 1];
                 var br = textSettings[i].meshInfo.positions[vertexIndex + 2];
-                var tr = textSettings[i].meshInfo.positions[vertexIndex + 3];
                 var x = tl.x + (br.x - tl.x) * 0.5f;
                 var y = tl.y + (br.y - tl.y) * 0.5f;
                 var w = Mathf.Abs(br.x - tl.x);
@@ -212,7 +214,7 @@ public class MainSceneController : MonoBehaviour
                 var uvOffset = min;
 
                 transformData[index] = new TransformData(
-                    center + new Vector3(x, y, j * 0.0001f),
+                    center - offset + new Vector3(x, y, j * 0.0001f),
                     new Vector3(w * 0.5f, h * 0.5f, 1f),
                     new Vector3(Random.Range(-Mathf.PI, Mathf.PI), 0f, 0f),
                     uvOffset,
@@ -224,8 +226,6 @@ public class MainSceneController : MonoBehaviour
                 uvIndex = Mathf.Min(uvIndex + 4, textSettings[i].meshInfo.uvs.Length - 4);
                 vertexIndex = Mathf.Min(vertexIndex + 4, textSettings[i].meshInfo.positions.Length - 4);
             }
-
-            center = Random.insideUnitSphere * sphereScale;
         }
         
 
