@@ -218,7 +218,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.46226418, g: 0.46226418, b: 0.46226418, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0}
   m_projectionMatrixMode: 1
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
@@ -276,11 +276,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ebe58fcbd64ca541837a369c8f3584c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  instanceCount: 100000
+  instanceCount: 10000
   maxTextLength: 10
   currentTextLength: 10
+  sphereScale: 972
   msdfTexture: {fileID: 2800000, guid: bddfed8ac1d69614f9d7d58808a222b5, type: 3}
-  sphereScale: 7456
   instanceMesh: {fileID: 0}
   instanceMaterial: {fileID: 0}
   subMeshIndex: 0

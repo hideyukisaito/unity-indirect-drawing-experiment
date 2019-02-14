@@ -76,7 +76,7 @@
 
 				float3 localPosition = v.vertex.xyz * transform.scale;
 
-				float3 worldPosition = transform.translate + localPosition;
+				float3 worldPosition = transform.translate + localPosition + float3(0.0, sin(_Time.y * 4.0 + (float)instanceID) * 5.0, 0.0);
 
 				v2f output;
 				output.pos = mul(UNITY_MATRIX_VP, float4(worldPosition, 1.0f));
@@ -103,7 +103,7 @@
 				float sigDist = median(texel.r, texel.g, texel.b) - 0.5;
 				float alpha = clamp(sigDist / fwidth(sigDist) + 0.5, 0.0, 1.0);
 				
-				float4 output = float4(1.0, 1.0, 1.0, alpha);
+				float4 output = float4(1.0, 1.0, 1.0, alpha * (1.0 - (sin(_Time.y * 7.0 - (float)i.instanceID) + 1.0) * 0.5));
 
 				return output;
 			}

@@ -54,8 +54,8 @@ public class MainSceneController : MonoBehaviour
     [SerializeField, Range(1, 100000)] public int instanceCount = 100;
     [SerializeField, Range(1, 20)] public int maxTextLength = 20;
     [SerializeField, Range(1, 20)] public int currentTextLength = 20;
-    [SerializeField] private Texture2D msdfTexture;
     [SerializeField, Range(1, 10000f)] private float sphereScale = 1000f;
+    [SerializeField] private Texture2D msdfTexture;
 
     public Mesh instanceMesh;
     public Material instanceMaterial;
